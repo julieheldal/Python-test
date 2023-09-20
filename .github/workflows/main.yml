@@ -52,11 +52,17 @@ jobs:
             echo "PYTHON_PROJECT=false" >> $GITHUB_ENV
           fi
 
+      - name: Reload Environment
+        run: echo "Reloading environment variables"
+        env:
+          PYTHON_PROJECT: ${{ env.PYTHON_PROJECT }}
+
       - name: Generate Python SBOM
+        if: env.PYTHON_PROJECT == 'true'
         uses: CycloneDX/gh-python-generate-sbom@v2
         with:
           input: ./requirements.txt
-          output: ./bom.xml
+          output: .sboms/bom-python.xml
           format: xml
       # Python END
       # Java
