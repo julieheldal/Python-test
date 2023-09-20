@@ -43,6 +43,7 @@ jobs:
           echo "Generating Node.js SBOM..."
           cyclonedx-bom -o sboms/bom-node.xml
       # Node.js END
+      
       # Python
       - name: Check if the project uses Python
         run: |
@@ -52,11 +53,6 @@ jobs:
             echo "PYTHON_PROJECT=false" >> $GITHUB_ENV
           fi
 
-      - name: Reload Environment
-        run: echo "Reloading environment variables"
-        env:
-          PYTHON_PROJECT: ${{ env.PYTHON_PROJECT }}
-
       - name: Generate Python SBOM
         if: env.PYTHON_PROJECT == 'true'
         uses: CycloneDX/gh-python-generate-sbom@v2
@@ -65,6 +61,7 @@ jobs:
           output: .sboms/bom-python.xml
           format: xml
       # Python END
+      
       # Java
       ## Maven
       - name: Check if the project uses Maven and get Java version
