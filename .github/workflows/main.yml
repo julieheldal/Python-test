@@ -46,8 +46,7 @@ jobs:
       # Python
       - name: Check if the project uses Python
         id: check-python
-        run:
-          | # Checks if the project has common python files and the presence of .py files.
+        run: |
           if ([ -f "requirements.txt" ] || [ -f "setup.py" ] || [ -f "pyproject.toml" ]) && [ "$(find . -name '*.py' -type f | wc -l)" -gt 0 ]; then
             echo "Python project detected."
             echo "PYTHON_PROJECT=true" >> $GITHUB_ENV
@@ -55,14 +54,19 @@ jobs:
             echo "No Python project detected. Skipping Python Setup"
             echo "PYTHON_PROJECT=false" >> $GITHUB_ENV
           fi
-
+      
+      - name: Reload Environment
+        run: echo "Reloading environment variables"
+        env:
+          PYTHON_PROJECT: ${{ env.PYTHON_PROJECT }}
+      
       - name: Setup Python environment and generate Python SBOM (if applicable)
         if: env.PYTHON_PROJECT == 'true'
         run: |
           echo "Setting up Python environment..."
           python -m pip install --upgrade pip
           pip install -r requirements.txt
-
+      
           echo "Generating Python SBOM..."
           cyclonedx-py -i requirements.txt -o sboms/bom-python.xml
       # Python END
