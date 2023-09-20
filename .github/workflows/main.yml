@@ -58,7 +58,7 @@ jobs:
         uses: CycloneDX/gh-python-generate-sbom@v2
         with:
           input: ./requirements.txt
-          output: .sboms/bom-python.xml
+          output: ./sboms/bom-python.xml
           format: xml
       # Python END
       
