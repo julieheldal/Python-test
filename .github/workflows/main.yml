@@ -52,22 +52,12 @@ jobs:
             echo "PYTHON_PROJECT=false" >> $GITHUB_ENV
           fi
 
-      - name: Checkout code
-        uses: actions/checkout@v2
-  
-      - name: Set up Python
-        uses: actions/setup-python@v2
+      - name: Generate Python SBOM
+        uses: CycloneDX/gh-python-generate-sbom@v2
         with:
-          python-version: '3.x'
-  
-      - name: Install dependencies
-        run: |
-          python -m pip install --upgrade pip
-          pip install cyclonedx-py
-  
-      - name: Generate SBOM
-        run: |
-          cyclonedx-py -i requirements.txt -o sboms/bom-python.xml
+          input: ./requirements.txt
+          output: ./bom.xml
+          format: xml
       # Python END
       # Java
       ## Maven
