@@ -65,8 +65,8 @@ jobs:
         run: |
           echo "Setting up Python environment..."
           python -m pip install --upgrade pip
-          pip install -r requirements.txt
-      
+          pip install Cython
+          pip install --prefer-binary -r requirements.txt
           echo "Generating Python SBOM..."
           cyclonedx-py -i requirements.txt -o sboms/bom-python.xml
       # Python END
