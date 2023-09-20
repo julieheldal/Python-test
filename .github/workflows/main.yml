@@ -45,29 +45,20 @@ jobs:
       # Node.js END
       # Python
       - name: Check if the project uses Python
-        id: check-python
         run: |
-          if ([ -f "requirements.txt" ] || [ -f "setup.py" ] || [ -f "pyproject.toml" ]) && [ "$(find . -name '*.py' -type f | wc -l)" -gt 0 ]; then
-            echo "Python project detected."
+          if [ -f "requirements.txt" ] || [ -f "setup.py" ] || [ -f "pyproject.toml" ]; then
             echo "PYTHON_PROJECT=true" >> $GITHUB_ENV
           else
-            echo "No Python project detected. Skipping Python Setup"
             echo "PYTHON_PROJECT=false" >> $GITHUB_ENV
           fi
-      
-      - name: Reload Environment
-        run: echo "Reloading environment variables"
-        env:
-          PYTHON_PROJECT: ${{ env.PYTHON_PROJECT }}
-      
+
       - name: Setup Python environment and generate Python SBOM (if applicable)
         if: env.PYTHON_PROJECT == 'true'
         run: |
-          echo "Setting up Python environment..."
           python -m pip install --upgrade pip
           pip install Cython
           pip install --prefer-binary -r requirements.txt
-          echo "Generating Python SBOM..."
+          pip install cyclonedx-py
           cyclonedx-py -i requirements.txt -o sboms/bom-python.xml
       # Python END
       # Java
