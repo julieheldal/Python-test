@@ -1,9 +1,9 @@
-name: Generate Multi-Language SBOM with CycloneDX.
+name: Generate Multi-Language SBOM with CycloneDX in JSON.
 
 on:
   push:
     branches:
-      - "*" # Updates every push to any branch.
+      - "*"
 
 jobs:
   generate-sbom:
@@ -16,13 +16,13 @@ jobs:
       - name: Create sboms directory
         run: |
           mkdir -p sboms
-        working-directory: ${{ github.workspace }} # Ensure you're in the workspace root
+        working-directory: ${{ github.workspace }}
 
       # Node.js
       - name: Check if the project uses Node.js
         id: check-nodejs
         run:
-          | # Checks if the project contains package.json with node.js dependencies
+          |
           if [ -f "package.json" ] && grep -q '"dependencies": *{' package.json; then
             echo "Node.js project detected."
             echo "NODE_PROJECT=true" >> $GITHUB_ENV
@@ -40,10 +40,10 @@ jobs:
           echo "Installing CycloneDX..."
           npm install -g cyclonedx-bom
 
-          echo "Generating Node.js SBOM..."
-          cyclonedx-bom -o sboms/node-bom.xml
+          echo "Generating Node.js SBOM in JSON..."
+          cyclonedx-bom -o sboms/node-bom.json --output-format json
       # Node.js END
-      
+
       # Python
       - name: Check if the project uses Python
         run: |
@@ -58,11 +58,11 @@ jobs:
         uses: CycloneDX/gh-python-generate-sbom@v2
         with:
           input: ./requirements.txt
-          output: ./sboms/python-bom.xml
-          format: xml
+          output: ./sboms/python-bom.json
+          format: json
       # Python END
-      
-      # Java (Maven) - ERROR ON LINE 84
+
+      # Java (Maven) - Need to insert plugin into pom.xml
       # - name: Check if the project uses Maven
       #   id: check-maven
       #   run: |
@@ -71,36 +71,19 @@ jobs:
       #       echo "MAVEN_PROJECT=true" >> $GITHUB_ENV
       #     fi
       
-      # - name: Install xmlstarlet
-      #   if: env.MAVEN_PROJECT == 'true'
-      #   run: |
-      #     sudo apt-get update
-      #     sudo apt-get install -y xmlstarlet
-      
-      # - name: Add CycloneDX plugin to pom.xml
-      #   if: env.MAVEN_PROJECT == 'true'
-      #   run: |
-      #     xmlstarlet ed --inplace \
-      #       -N x=http://maven.apache.org/POM/4.0.0 \
-      #       -s /x:project/x:build/x:plugins -t elem -n plugin \
-      #       -s //plugin[last()] -t elem -n groupId -v org.cyclonedx \
-      #       -s //plugin[last()] -t elem -n artifactId -v cyclonedx-maven-plugin \
-      #       -s //plugin[last()] -t elem -n version -v '2.6.x' \
-      #       pom.xml
-
       # - name: Setup Java environment and generate Java SBOM (if applicable)
       #   if: env.MAVEN_PROJECT == 'true'
       #   run: |
-      #     echo "Building the project and generating Java SBOM..."
-      #     mvn clean install cyclonedx:makeAggregateBom
-      #     cp target/bom.xml sboms/maven-bom.xml
-      #       # Java (Maven) END
+      #     echo "Building the project and generating Java SBOM in JSON..."
+      #     mvn clean install cyclonedx:makeAggregateBom --batch-mode --errors
+      #     cp target/bom.json sboms/maven-bom.json
+      # Java (Maven) END
 
       # .NET
       - name: Check if the project uses .NET and get .NET version
         id: check-dotnet
         run: |
-          csproj_paths=$(find . -name '*.csproj')
+          csproj_paths=$(find . -name '*.csproj')          # Searches recursively within the directory to find .csproj files
           if [ -n "$csproj_paths" ]; then
             echo ".NET projects detected."
             echo "DOTNET_PROJECT=true" >> $GITHUB_ENV
@@ -116,10 +99,9 @@ jobs:
           dotnet build
           echo "Installing CycloneDX"
           dotnet tool install --global CycloneDX
-          echo "Generating merged .NET SBOM..."
           IFS=',' read -ra ADDR <<< "$CSPROJ_PATHS"
-          for csproj_path in "${ADDR[@]}"; do
-            dotnet CycloneDX "$csproj_path" -o sboms/dotnet-bom-$(basename "$csproj_path" .csproj).xml -r
+          for csproj_path in "${ADDR[@]}"; do              # Creates an SBOM for each csproj file.
+            dotnet CycloneDX "$csproj_path" -o sboms/dotnet-bom-$(basename "$csproj_path" .csproj).json -j
           done
       # .NET END
 
@@ -129,7 +111,7 @@ jobs:
         with:
           name: sbom-artifact
           path: |
-            ./sboms/node-bom.xml
-            ./sboms/python-bom.xml
-            ./sboms/maven-bom.xml
-            ./sboms/dotnet-bom-*.xml
+            ./sboms/node-bom.json
+            ./sboms/python-bom.json
+            # ./sboms/maven-bom.json  
+            ./sboms/dotnet-bom-*.json
