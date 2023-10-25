@@ -57,7 +57,7 @@ jobs:
        
       
       - name: Generate Python SBOM
-        if: env.PYTHON_PROJECT == 'true'
+        if: env.PYTHON_PROJECT == 'false'
         run: |
           echo "Installing CycloneDX..."
           pip install cyclonedx-bom
