@@ -42,28 +42,34 @@ jobs:
           cyclonedx-npm --output-format JSON > sboms/node-bom.json
       # Node.js END
 
-      # Python
+
+  # Python
       - name: Check if the project uses Python
         id: check-python
-        run: 
-          | 
+        run: |
           if [ -f "pyproject.toml" ] && grep -q 'dependencies' pyproject.toml; then
             echo "Python project detected."
             echo "PYTHON_PROJECT=true" >> $GITHUB_ENV
-          else 
+          elif [ -f "Pipfile.lock" ]; then
+            echo "Python project detected."
+            echo "PYTHON_PROJECT=true" >> $GITHUB_ENV
+          elif [ -f "requirements.txt" ]; then
+            echo "Python project detected."
+            echo "PYTHON_PROJECT=true" >> $GITHUB_ENV
+          else
             echo "No Python project detected. Skipping Python setup."
             echo "PYTHON_PROJECT=false" >> $GITHUB_ENV
           fi
-       
       
       - name: Generate Python SBOM
-        if: env.PYTHON_PROJECT == 'false'
+        if: env.PYTHON_PROJECT == 'true'
         run: |
           echo "Installing CycloneDX..."
           pip install cyclonedx-bom
-
+      
           echo "Generating Python SBOM in JSON"
-          cyclonedx-py -p -i . -o /sboms/python-bom.json --format json
+          cyclonedx-py -p -o /sboms/python-bom.json --format json
+
           
       # Python END 
 
