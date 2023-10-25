@@ -1,4 +1,4 @@
-name: Generate Multi-Language SBOM with CycloneDX in JSON.
+name: Generate Multi-Language SBOM with CycloneDX in JSON
 
 on:
   push:
@@ -30,36 +30,57 @@ jobs:
             echo "No Node.js project detected. Skipping Node.js setup."
             echo "NODE_PROJECT=false" >> $GITHUB_ENV
           fi
-
+      
       - name: Setup Node.js environment and Generate SBOM (if applicable)
         if: env.NODE_PROJECT == 'true'
         run: |
-          echo "Installing Node.js dependencies..."
-          npm install
-
           echo "Installing CycloneDX..."
-          npm install -g cyclonedx-bom
-
+          npm install
+          npm install -g @cyclonedx/cyclonedx-npm
+          
           echo "Generating Node.js SBOM in JSON..."
-          cyclonedx-bom -o sboms/node-bom.json --output-format json
+          cyclonedx-npm --output-format JSON > sboms/node-bom.json
       # Node.js END
 
       # Python
       - name: Check if the project uses Python
-        run: |
-          if find . -type f -name "requirements.txt" -print -quit | grep -q .; then
+        id: check-python
+        run: 
+          | 
+          if [ -f "pyproject.toml" ] && grep -q 'dependencies' pyproject.toml; then
+            echo "Python project detected."
             echo "PYTHON_PROJECT=true" >> $GITHUB_ENV
-          else
+          else 
+            echo "No Python project detected. Skipping Python setup."
             echo "PYTHON_PROJECT=false" >> $GITHUB_ENV
           fi
+       
       
       - name: Generate Python SBOM
         if: env.PYTHON_PROJECT == 'true'
-        uses: CycloneDX/gh-python-generate-sbom@v2
-        with:
-          input: $(find . -type f -name "requirements.txt")
-          output: ./sboms/python-bom.json
-          format: json
+        run: |
+          echo "Installing CycloneDX..."
+          pip install cyclonedx-bom
+
+          echo "Generating Python SBOM in JSON"
+          cyclone-dx -p -i . -o /sboms/python-bom.json --format json
+          
+      # Python END 
+
+      #OLD Python 
+      # run: |
+      #    if find . -type f -name "requirements.txt" -print -quit | grep -q .; then
+      #     echo "PYTHON_PROJECT=true" >> $GITHUB_ENV
+      #    else
+      #     echo "PYTHON_PROJECT=false" >> $GITHUB_ENV
+      #    fi   
+      # cyclonedx-py -pip -i <path> -o ./sboms/python-bom.json --format json
+        
+      #  uses: CycloneDX/gh-python-generate-sbom@v2
+      # with:
+      #    input: $(find . -type f -name "requirements.txt")
+      #    output: ./sboms/python-bom.json
+      #   format: json
       # Python END
 
       # Java (Maven) - Need to insert plugin into pom.xml
