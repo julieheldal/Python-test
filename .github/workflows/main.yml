@@ -63,7 +63,7 @@ jobs:
           pip install cyclonedx-bom
 
           echo "Generating Python SBOM in JSON"
-          cyclone-dx -p -i . -o /sboms/python-bom.json --format json
+          cyclonedx-py -p -i . -o /sboms/python-bom.json --format json
           
       # Python END 
 
